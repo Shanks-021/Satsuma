@@ -48,3 +48,7 @@ Test a conversion without the UI:
 ```sh
 swift build && .build/debug/Satsuma --run convert:docx file.pdf
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
