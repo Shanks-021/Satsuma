@@ -104,12 +104,6 @@ enum ImageOps {
         return out
     }
 
-    static func compress(_ url: URL) throws -> URL {
-        let out = Output.url(for: url, ext: "jpg", suffix: " (compressed)")
-        try write(try loadOriented(url), to: out, ext: "jpg", quality: 0.6)
-        return out
-    }
-
     static func resizeHalf(_ url: URL) throws -> URL {
         let img = try loadOriented(url)
         let w = max(1, img.width / 2), h = max(1, img.height / 2)

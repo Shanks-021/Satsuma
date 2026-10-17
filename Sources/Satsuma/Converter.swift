@@ -153,10 +153,21 @@ enum Converter {
 
         HUD.shared.showProgress("\(option.title) — \(urls.count) file\(urls.count == 1 ? "" : "s")…")
 
+        var isCompress = false
+        if case .tool(let t) = option.op, t == .compress || t == .compressMax { isCompress = true }
+        var before = 0, after = 0
+
         let work: () -> (outputs: [URL], errors: [String]) = {
             var outputs: [URL] = [], errors: [String] = []
             for job in jobs {
-                do { outputs.append(try execute(option.op, job, cat)) }
+                do {
+                    let out = try execute(option.op, job, cat)
+                    outputs.append(out)
+                    if isCompress {
+                        before += job.map(ImageCompressor.fileSize).reduce(0, +)
+                        after += ImageCompressor.fileSize(out)
+                    }
+                }
                 catch { errors.append("\(job[0].lastPathComponent): \(error.localizedDescription)") }
             }
             return (outputs, errors)
@@ -165,7 +176,13 @@ enum Converter {
         let finish: ((outputs: [URL], errors: [String])) -> Void = { result in
             if result.errors.isEmpty {
                 let n = result.outputs.count
-                HUD.shared.showDone("Done — \(n) file\(n == 1 ? "" : "s") created", outputs: result.outputs)
+                if isCompress && before > 0 {
+                    let saved = Int((1 - Double(after) / Double(before)) * 100)
+                    let fmt = ByteCountFormatter()
+                    HUD.shared.showDone("Saved \(saved)% — \(fmt.string(fromByteCount: Int64(before))) → \(fmt.string(fromByteCount: Int64(after)))", outputs: result.outputs)
+                } else {
+                    HUD.shared.showDone("Done — \(n) file\(n == 1 ? "" : "s") created", outputs: result.outputs)
+                }
             } else {
                 HUD.shared.showError(result.errors.joined(separator: "\n"), outputs: result.outputs)
             }
@@ -200,7 +217,8 @@ enum Converter {
             case (.unarchive, _): return try ArchiveOps.extract(url)
             case (.mergePDF, _): return try PDFOps.merge(files)
             case (.combinePDF, _): return try ImageOps.combineToPDF(files)
-            case (.compress, .image): return try ImageOps.compress(url)
+            case (.compress, .image): return try ImageCompressor.compress(url, level: .recommended).url
+            case (.compressMax, .image): return try ImageCompressor.compress(url, level: .extreme).url
             case (.resizeHalf, _): return try ImageOps.resizeHalf(url)
             case (.rotate, .image): return try ImageOps.rotate(url)
             case (.flip, _): return try ImageOps.flip(url)

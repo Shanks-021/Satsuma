@@ -148,7 +148,7 @@ MainActor.assumeIsolated {
 @MainActor
 enum TestRunner {
     static let tools: [String: Tool] = [
-        "compress": .compress, "half": .resizeHalf, "rotate": .rotate, "flip": .flip, "gray": .grayscale,
+        "compress": .compress, "max": .compressMax, "half": .resizeHalf, "rotate": .rotate, "flip": .flip, "gray": .grayscale,
         "combine": .combinePDF, "720": .scale720, "mute": .mute, "frame": .firstFrame, "normalize": .normalize,
         "mono": .mono, "reverse": .reverse, "merge": .mergePDF, "split": .splitPDF, "rotatepdf": .rotatePDF,
         "zip": .zip, "extract": .unarchive,

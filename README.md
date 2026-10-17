@@ -20,6 +20,14 @@ paragraphs, and bullets, tab stops, rules, shading, links and images are written
 
 Not yet handled: table grids, icon fonts, multi-column layouts, scanned (image-only) PDFs.
 
+## Image compression
+
+`ImageCompressor.swift` keeps each image's format and size, strips metadata, and only saves a file when it is smaller:
+
+- **JPEG / HEIC / WebP** — binary search for the lowest quality whose SSIM (on full-resolution crops) stays above the target; JPEGs are then losslessly repacked with `jpegtran` when installed.
+- **PNG** — palette quantization (median cut + k-means, ≤256 colours incl. transparency) with dithering, written as an indexed PNG; falls back to lossless when a palette would show.
+- Tools wheel: **Compress** (recommended) and **Max Compress** (smaller, slightly lower quality).
+
 ## Build
 
 Requires macOS 13+ and Xcode command-line tools. Video/audio needs `brew install ffmpeg`; WebP needs `brew install webp`.

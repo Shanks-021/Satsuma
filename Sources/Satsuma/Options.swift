@@ -24,7 +24,7 @@ enum FileCategory {
 }
 
 enum Tool {
-    case compress, resizeHalf, rotate, flip, grayscale, combinePDF
+    case compress, compressMax, resizeHalf, rotate, flip, grayscale, combinePDF
     case scale720, mute, firstFrame
     case normalize, mono, reverse
     case mergePDF, splitPDF, rotatePDF
@@ -108,6 +108,7 @@ enum Catalog {
             case .image:
                 list += [
                     .init(title: "Compress", symbol: "arrow.down.right.and.arrow.up.left", op: .tool(.compress)),
+                    .init(title: "Max Compress", symbol: "arrow.down.to.line.compact", op: .tool(.compressMax)),
                     .init(title: "Half Size", symbol: "square.resize.down", op: .tool(.resizeHalf)),
                     .init(title: "Rotate", symbol: "rotate.right", op: .tool(.rotate)),
                     .init(title: "Flip", symbol: "arrow.left.and.right.righttriangle.left.righttriangle.right", op: .tool(.flip)),
