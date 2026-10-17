@@ -145,7 +145,13 @@ enum Converter {
         let jobs: [[URL]] = batch ? [urls] : urls.map { [$0] }
         // Rich-text import/export uses AppKit's HTML engine, which must run on the main thread.
         let mainThreadOnly: Bool
-        if case .convert(let ext) = option.op, [.document, .markdown, .pdf].contains(cat), !(cat == .pdf && ext == "docx") {
+        let officeToPDF: Bool = {
+            if case .convert("pdf") = option.op, cat == .document, OfficeRender.available {
+                return urls.allSatisfy { OfficeRender.officeExts.contains($0.pathExtension.lowercased()) }
+            }
+            return false
+        }()
+        if case .convert(let ext) = option.op, [.document, .markdown, .pdf].contains(cat), !(cat == .pdf && ext == "docx"), !officeToPDF {
             mainThreadOnly = true
         } else {
             mainThreadOnly = false

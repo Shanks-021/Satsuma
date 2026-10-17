@@ -112,6 +112,56 @@ enum PDFOps {
     }
 }
 
+/// Renders Office documents to PDF with a real layout engine (margins, tabs, borders,
+/// lists and spacing intact): LibreOffice when installed, otherwise Pages.
+enum OfficeRender {
+    static let officeExts: Set<String> = ["docx", "doc", "odt", "rtf", "pages"]
+
+    static var libreOffice: String? {
+        ["/Applications/LibreOffice.app/Contents/MacOS/soffice", "/opt/homebrew/bin/soffice", "/usr/local/bin/soffice"]
+            .first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    static var hasPages: Bool {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.iWork.Pages") != nil
+    }
+
+    static var available: Bool { libreOffice != nil || hasPages }
+
+    static func toPDF(_ url: URL, out: URL) throws {
+        if let soffice = libreOffice {
+            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("satsuma-lo-\(UUID().uuidString)")
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: dir) }
+            // A private profile lets this run even while LibreOffice is open.
+            try Tools.run(soffice, ["-env:UserInstallation=file://\(dir.path)/profile", "--headless",
+                                    "--convert-to", "pdf", "--outdir", dir.path, url.path])
+            let produced = dir.appendingPathComponent(url.deletingPathExtension().lastPathComponent + ".pdf")
+            try FileManager.default.moveItem(at: produced, to: out)
+            return
+        }
+        guard hasPages else { throw ConversionError("Install LibreOffice or Pages for Word → PDF") }
+        // Quit Pages afterwards only if we were the ones who launched it.
+        let script = """
+        on run argv
+            set inFile to POSIX file (item 1 of argv)
+            set outFile to POSIX file (item 2 of argv)
+            set wasRunning to application "Pages" is running
+            with timeout of 180 seconds
+                tell application "Pages"
+                    set d to open inFile
+                    export d to outFile as PDF
+                    close d saving no
+                    if not wasRunning then quit
+                end tell
+            end timeout
+        end run
+        """
+        try Tools.run("/usr/bin/osascript", ["-e", script, url.path, out.path])
+        guard FileManager.default.fileExists(atPath: out.path) else { throw ConversionError("Pages did not export a PDF") }
+    }
+}
+
 /// Rich-text documents. AppKit's HTML importer needs the main thread, so these run there.
 enum DocOps {
     static func read(_ url: URL, category: FileCategory) throws -> NSAttributedString {
@@ -147,6 +197,11 @@ enum DocOps {
             let md = try String(contentsOf: url, encoding: .utf8)
             try Markdown.toHTML(md, title: url.deletingPathExtension().lastPathComponent)
                 .write(to: out, atomically: true, encoding: .utf8)
+            return out
+        }
+
+        if ext == "pdf", category == .document, OfficeRender.officeExts.contains(url.pathExtension.lowercased()), OfficeRender.available {
+            try OfficeRender.toPDF(url, out: out)
             return out
         }
 

@@ -57,7 +57,7 @@ func category(of url: URL) -> FileCategory {
     if ["md", "markdown"].contains(ext) { return .markdown }
     if ["csv", "tsv"].contains(ext) { return .table }
     if ["zip", "tar", "gz", "tgz", "bz2", "xz", "rar", "7z"].contains(ext) || name.hasSuffix(".tar.gz") { return .archive }
-    if ["rtf", "rtfd", "doc", "docx", "odt", "txt", "html", "htm", "webarchive", "textclipping"].contains(ext) { return .document }
+    if ["rtf", "rtfd", "doc", "docx", "odt", "pages", "txt", "html", "htm", "webarchive", "textclipping"].contains(ext) { return .document }
     guard let type = UTType(filenameExtension: ext) else { return .other }
     if type.conforms(to: .pdf) { return .pdf }
     if type.conforms(to: .image) { return .image }

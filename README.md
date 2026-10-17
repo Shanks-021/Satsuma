@@ -20,6 +20,13 @@ paragraphs, and bullets, tab stops, rules, shading, links and images are written
 
 Not yet handled: table grids, icon fonts, multi-column layouts, scanned (image-only) PDFs.
 
+## Word → PDF
+
+`.docx`, `.doc`, `.odt`, `.rtf` and `.pages` files are rendered with a real layout engine so margins,
+tab stops, borders, lists and spacing survive: LibreOffice (headless) when installed, otherwise Pages
+via AppleScript (macOS asks once for permission to control Pages). Without either, a basic built-in
+renderer is used.
+
 ## Image compression
 
 `ImageCompressor.swift` keeps each image's format and size, strips metadata, and only saves a file when it is smaller:
